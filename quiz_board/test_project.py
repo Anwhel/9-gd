@@ -19,7 +19,7 @@ Science,100,What is H2O?,Water
 
 # ---------- read_questions ----------
 
-def test_read_questions_basic():
+def test_read_questions():
     questions = read_questions(GOOD_CSV)
     assert len(questions) == 3
     assert questions[0] == {
@@ -75,7 +75,7 @@ def test_read_questions_empty():
 
 # ---------- build_board ----------
 
-def test_build_board_groups_in_order_and_sorts_points():
+def test_build_board():
     board = build_board(read_questions(GOOD_CSV))
     assert [c["name"] for c in board] == ["Maths", "Science"]
     assert [q["points"] for q in board[0]["questions"]] == [100, 200]
@@ -118,7 +118,7 @@ def test_parse_teams_maximum():
 
 # ---------- template_csv ----------
 
-def test_template_csv_is_valid_quiz():
+def test_template_csv():
     text = template_csv()
     assert text.startswith("category,points,question,answer\n")
     board = build_board(read_questions(text))
