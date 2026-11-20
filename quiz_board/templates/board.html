@@ -1,0 +1,44 @@
+{% extends "layout.html" %}
+{% block title %}{{ title }} · Quiz Board{% endblock %}
+{% block body_class %}game{% endblock %}
+{% block body %}
+<header class="topbar">
+  <h1>{{ title }}</h1>
+  <div class="tools">
+    <button type="button" id="fullscreen" class="tool">Full screen</button>
+    <button type="button" id="restart" class="tool">Restart</button>
+    <a href="{{ url_for('index') }}" class="tool">New quiz</a>
+  </div>
+</header>
+
+<main id="board" class="board" style="--cols: {{ board|length }}"></main>
+
+<footer id="scores" class="scores"></footer>
+
+<div id="modal" class="modal" hidden>
+  <div class="modal-inner">
+    <p id="modal-label" class="modal-label"></p>
+    <p id="modal-question" class="modal-question"></p>
+    <p id="modal-answer" class="modal-answer" hidden></p>
+    <div id="modal-teams" class="modal-teams" hidden></div>
+    <div class="modal-actions">
+      <button type="button" id="reveal" class="button">Show answer <kbd>Space</kbd></button>
+      <button type="button" id="close" class="button secondary">Back to board <kbd>Esc</kbd></button>
+    </div>
+  </div>
+</div>
+
+<div id="final" class="modal final" hidden>
+  <div class="modal-inner">
+    <p class="modal-label">Final scores</p>
+    <p id="final-winner" class="modal-question"></p>
+    <ol id="final-list" class="final-list"></ol>
+    <div class="modal-actions">
+      <button type="button" id="final-close" class="button secondary">Back to board</button>
+    </div>
+  </div>
+</div>
+
+<script id="game-data" type="application/json">{{ {"board": board, "teams": teams, "title": title}|tojson }}</script>
+<script src="{{ url_for('static', filename='game.js') }}"></script>
+{% endblock %}

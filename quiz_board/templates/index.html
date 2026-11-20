@@ -1,0 +1,53 @@
+{% extends "layout.html" %}
+{% block body_class %}setup{% endblock %}
+{% block body %}
+<main class="setup-card">
+  <h1>Quiz Board</h1>
+  <p class="lead">Turn a spreadsheet of questions into a points-board quiz your class can play in teams.</p>
+
+  {% if errors %}
+  <div class="errors" role="alert">
+    <strong>Please fix these problems in your file and upload it again:</strong>
+    <ul>
+      {% for error in errors %}<li>{{ error }}</li>{% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+
+  <ol class="steps">
+    <li>
+      <h2>Download the template</h2>
+      <p><a class="button secondary" href="{{ url_for('template') }}">Download quiz_template.csv</a></p>
+    </li>
+    <li>
+      <h2>Fill in your questions</h2>
+      <p>Open it in Excel, Google Sheets or Numbers. Keep the first row as it is, then add one question per row:</p>
+      <table class="example">
+        <tr><th>category</th><th>points</th><th>question</th><th>answer</th></tr>
+        <tr><td>Science</td><td>100</td><td>What gas do plants absorb?</td><td>Carbon dioxide</td></tr>
+      </table>
+      <p class="hint">Up to 6 categories with up to 6 questions each. Save as <em>CSV</em> (File → Download → .csv in Google Sheets).</p>
+    </li>
+    <li>
+      <h2>Upload and play</h2>
+      <form action="{{ url_for('play') }}" method="post" enctype="multipart/form-data">
+        <label>Quiz file (.csv)
+          <input type="file" name="quiz" accept=".csv,text/csv" required>
+        </label>
+        <label>Quiz title
+          <input type="text" name="title" placeholder="Year 9 Science Revision" maxlength="80">
+        </label>
+        <label>Team names <span class="hint">(separate with commas)</span>
+          <input type="text" name="teams" placeholder="Red, Blue, Green" maxlength="200">
+        </label>
+        <button type="submit" class="button">Start the quiz</button>
+      </form>
+    </li>
+  </ol>
+
+  <form action="{{ url_for('play') }}" method="post" class="demo">
+    <input type="hidden" name="demo" value="1">
+    <button type="submit" class="link">Or try the demo quiz first</button>
+  </form>
+</main>
+{% endblock %}
