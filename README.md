@@ -3,6 +3,10 @@
 
 > Open this page at [https://anwhel.github.io/9-gd/](https://anwhel.github.io/9-gd/)
 
+## Quest Studio (RPG maker)
+
+A browser RPG maker with a pixel editor, JavaScript/Python scripting, and automatic pseudocode and flowcharts. It is in [`rpg-maker/`](rpg-maker/) and is hosted at [https://anwhel.github.io/9-gd/rpg-maker/](https://anwhel.github.io/9-gd/rpg-maker/).
+
 ## Use as Extension
 
 This repository can be added as an **extension** in MakeCode.
