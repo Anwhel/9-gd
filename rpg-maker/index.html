@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Quest Studio</title>
+<meta name="description" content="Make top-down RPG games in the browser: draw your own tiles and characters, build maps, and program events in JavaScript or Python with automatic pseudocode and flowcharts.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><rect width='16' height='16' fill='%2338b764'/><rect x='5' y='2' width='6' height='5' fill='%23f2c69b'/><rect x='4' y='7' width='8' height='6' fill='%233b5dc9'/><rect x='4' y='13' width='3' height='2' fill='%235c3a1a'/><rect x='9' y='13' width='3' height='2' fill='%235c3a1a'/></svg>">
+<link rel="stylesheet" href="vendor/codemirror/codemirror.css">
+<link rel="stylesheet" href="vendor/codemirror/material-darker.css">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand" title="Quest Studio">⚔️ <span>Quest Studio</span></div>
+  <input id="projName" class="proj-name" aria-label="Project name" spellcheck="false">
+  <nav class="tabs" role="tablist">
+    <button class="tab-btn active" data-tab="map" role="tab">🗺️ Map</button>
+    <button class="tab-btn" data-tab="art" role="tab">🎨 Art</button>
+    <button class="tab-btn" data-tab="scripts" role="tab">📜 Scripts</button>
+    <button class="tab-btn play" data-tab="play" role="tab">▶ Play</button>
+  </nav>
+  <div class="top-actions">
+    <span id="saveState" class="save-state">Saved</span>
+    <button class="btn" id="btnProjects" title="Open, create or delete projects">📁 Projects</button>
+    <button class="btn" id="btnExport" title="Download this project as a file to move it to another device">⬇ Export</button>
+    <button class="btn" id="btnImport" title="Open a project file">⬆ Import</button>
+    <input type="file" id="importFile" accept=".json,.quest,application/json" hidden>
+  </div>
+</header>
+
+<main>
+  <!-- ============================ MAP ============================ -->
+  <section class="tab-panel active" id="tab-map">
+    <aside class="side left">
+      <div class="panel">
+        <div class="panel-head"><h3>Maps</h3><button class="btn sm" id="mapAdd" title="Add a new map">+ New</button></div>
+        <ul class="list" id="mapList"></ul>
+      </div>
+      <div class="panel grow">
+        <div class="panel-head"><h3 id="paletteTitle">Tiles</h3></div>
+        <div class="layer-switch" role="radiogroup" aria-label="Layer">
+          <button data-layer="ground" class="active" title="Floor tiles">Ground</button>
+          <button data-layer="detail" title="Things on top of the ground: trees, rocks, furniture">Top</button>
+          <button data-layer="chars" title="Characters and objects that can have scripts">Characters</button>
+        </div>
+        <div class="asset-grid" id="mapPalette"></div>
+        <p class="hint" id="paletteHint"></p>
+      </div>
+    </aside>
+    <div class="center">
+      <div class="toolbar" id="mapTools">
+        <button data-tool="paint" class="active" title="Paint (P)">✏️ Paint</button>
+        <button data-tool="fill" title="Fill an area (F)">🪣 Fill</button>
+        <button data-tool="rect" title="Draw a filled rectangle (R)">⬛ Box</button>
+        <button data-tool="erase" title="Erase (E)">🧽 Erase</button>
+        <button data-tool="pick" title="Pick a tile from the map (I)">💧 Pick</button>
+        <button data-tool="player" title="Set where the player starts">🚩 Player start</button>
+        <span class="sep"></span>
+        <button id="mapUndo" title="Undo (Ctrl+Z)">↶</button>
+        <button id="mapRedo" title="Redo (Ctrl+Y)">↷</button>
+        <span class="sep"></span>
+        <label class="chk"><input type="checkbox" id="mapGrid" checked> Grid</label>
+        <label class="zoom">Zoom <input type="range" id="mapZoom" min="1" max="4" step="1" value="2"></label>
+        <span class="coords" id="mapCoords"></span>
+      </div>
+      <div class="canvas-wrap" id="mapWrap"><canvas id="mapCanvas"></canvas></div>
+    </div>
+    <aside class="side right" id="inspector"></aside>
+  </section>
+
+  <!-- ============================ ART ============================ -->
+  <section class="tab-panel" id="tab-art">
+    <aside class="side left">
+      <div class="panel grow">
+        <div class="panel-head"><h3>Art</h3></div>
+        <div class="row gap">
+          <button class="btn sm" id="artNewTile">+ Tile</button>
+          <button class="btn sm" id="artNewSprite">+ Character</button>
+        </div>
+        <div class="filter-switch" id="artFilter">
+          <button data-f="all" class="active">All</button><button data-f="tile">Tiles</button><button data-f="sprite">Characters</button>
+        </div>
+        <div class="asset-grid big" id="artList"></div>
+      </div>
+    </aside>
+    <div class="center art-center">
+      <div class="toolbar" id="artTools">
+        <button data-tool="pencil" class="active" title="Pencil (B)">✏️</button>
+        <button data-tool="eraser" title="Eraser (E) – or right-click">🧽</button>
+        <button data-tool="fill" title="Fill (F)">🪣</button>
+        <button data-tool="line" title="Line (L)">📏</button>
+        <button data-tool="rect" title="Rectangle (R)">▭</button>
+        <button data-tool="picker" title="Pick a colour (I)">💧</button>
+        <span class="sep"></span>
+        <label class="chk" title="Whatever you draw on the left is copied to the right"><input type="checkbox" id="artMirror"> Mirror</label>
+        <span class="sep"></span>
+        <button id="artFlipH" title="Flip left/right">⇋</button>
+        <button id="artFlipV" title="Flip up/down">⇵</button>
+        <button id="artShiftL" title="Shift left">←</button>
+        <button id="artShiftR" title="Shift right">→</button>
+        <button id="artShiftU" title="Shift up">↑</button>
+        <button id="artShiftD" title="Shift down">↓</button>
+        <button id="artClear" title="Clear this frame">🗑</button>
+        <span class="sep"></span>
+        <button id="artUndo" title="Undo (Ctrl+Z)">↶</button>
+        <button id="artRedo" title="Redo (Ctrl+Y)">↷</button>
+      </div>
+      <div class="art-body">
+        <div class="pixel-wrap"><canvas id="artCanvas" width="384" height="384"></canvas></div>
+        <div class="art-sidebar">
+          <div class="panel">
+            <h3>Colours</h3>
+            <div class="palette" id="artPalette"></div>
+            <div class="row gap">
+              <input type="color" id="artColor" value="#38b764" title="Choose any colour">
+              <button class="btn sm" id="artAddColor" title="Add this colour to the palette">+ Add</button>
+            </div>
+          </div>
+          <div class="panel">
+            <h3>Preview</h3>
+            <div class="row gap center-v">
+              <canvas id="artPreview" width="64" height="64" class="preview"></canvas>
+              <canvas id="artTilePreview" width="96" height="96" class="preview" title="How the tile looks when repeated"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="frames">
+        <h3>Animation frames</h3>
+        <div class="frame-strip" id="artFrames"></div>
+        <label class="zoom">Speed <input type="range" id="artFps" min="1" max="12" value="3"> <span id="artFpsVal"></span> fps</label>
+      </div>
+    </div>
+    <aside class="side right" id="artProps"></aside>
+  </section>
+
+  <!-- ========================== SCRIPTS ========================== -->
+  <section class="tab-panel" id="tab-scripts">
+    <aside class="side left">
+      <div class="panel grow">
+        <div class="panel-head"><h3>Scripts</h3></div>
+        <p class="hint">A script runs when its event happens in the game.</p>
+        <ul class="list script-list" id="scriptList"></ul>
+      </div>
+    </aside>
+    <div class="center script-center">
+      <div class="toolbar">
+        <strong id="scriptTitle" class="script-title">Script</strong>
+        <span class="sep"></span>
+        <div class="seg" id="langSwitch" role="radiogroup" aria-label="Language">
+          <button data-lang="js">JavaScript</button><button data-lang="py">Python</button>
+        </div>
+        <span class="grow"></span>
+        <button class="btn sm" id="btnApi" title="Show commands you can use">📖 Commands</button>
+        <button class="btn sm primary" id="btnTestScript" title="Play the game">▶ Play</button>
+      </div>
+      <div class="code-and-view">
+        <div class="code-col">
+          <div id="codeHost" class="code-host"></div>
+          <div class="code-status" id="codeStatus"></div>
+          <div class="api-panel" id="apiPanel" hidden></div>
+        </div>
+        <div class="view-col">
+          <div class="toolbar">
+            <div class="seg" id="viewSwitch">
+              <button data-view="pseudo" class="active">Pseudocode</button><button data-view="flow">Flowchart</button>
+            </div>
+            <label class="chk small" id="fitWrap" hidden><input type="checkbox" id="flowFit" checked> Fit</label>
+            <span class="grow"></span>
+            <button class="btn sm" id="btnCopyView" title="Copy">📋 Copy</button>
+            <button class="btn sm" id="btnDownloadView" title="Download">⬇ Save</button>
+          </div>
+          <pre id="pseudoView" class="pseudo"></pre>
+          <div id="flowView" class="flow" hidden></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================ PLAY =========================== -->
+  <section class="tab-panel" id="tab-play">
+    <div class="play-layout">
+      <div class="play-main">
+        <div class="hud" id="hud"></div>
+        <div class="stage" id="stage">
+          <canvas id="gameCanvas" width="320" height="240"></canvas>
+          <div class="dialog" id="dialog" hidden></div>
+          <div class="overlay" id="overlay" hidden></div>
+        </div>
+        <div class="row gap play-buttons">
+          <button class="btn primary" id="btnRestart">↻ Restart</button>
+          <span class="hint">Move: arrow keys / WASD · Talk / choose: Space or Enter</span>
+        </div>
+      </div>
+      <aside class="play-side">
+        <h3>Output</h3>
+        <div class="log" id="gameLog"></div>
+        <button class="btn sm" id="btnClearLog">Clear</button>
+      </aside>
+    </div>
+  </section>
+</main>
+
+<!-- ======================== PROJECTS DIALOG ======================== -->
+<dialog id="projectsDlg" class="modal">
+  <form method="dialog" class="modal-inner">
+    <div class="panel-head"><h2>Projects</h2><button class="btn sm" value="close">✕</button></div>
+    <p class="hint">Projects are saved automatically in this browser. Use <b>Export</b> to download a file you can open on another device with <b>Import</b>.</p>
+    <div class="row gap">
+      <button type="button" class="btn primary" id="newStarter">+ New from example</button>
+      <button type="button" class="btn" id="newBlank">+ New blank project</button>
+      <button type="button" class="btn" id="dlgImport">⬆ Import file</button>
+    </div>
+    <ul class="list proj-list" id="projList"></ul>
+  </form>
+</dialog>
+
+<div id="toast" class="toast" hidden></div>
+
+<script src="vendor/acorn.js"></script>
+<script src="vendor/codemirror/codemirror.js"></script>
+<script src="vendor/codemirror/javascript.js"></script>
+<script src="vendor/codemirror/python.js"></script>
+<script src="vendor/codemirror/matchbrackets.js"></script>
+<script src="vendor/codemirror/closebrackets.js"></script>
+<script src="vendor/skulpt.min.js"></script>
+<script src="vendor/skulpt-stdlib.js"></script>
+<script src="js/defaults.js"></script>
+<script src="js/storage.js"></script>
+<script src="js/art.js"></script>
+<script src="js/codeModel.js"></script>
+<script src="js/flowchart.js"></script>
+<script src="js/runtime.js"></script>
+<script src="js/mapEditor.js"></script>
+<script src="js/artEditor.js"></script>
+<script src="js/scriptEditor.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
